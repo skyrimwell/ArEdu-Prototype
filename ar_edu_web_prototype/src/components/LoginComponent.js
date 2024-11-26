@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -6,7 +7,6 @@ const LoginPage = () => {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    // Простая валидация
     if (email && password) {
       alert(`Вход выполнен! Email: ${email}`);
     } else {
@@ -44,6 +44,9 @@ const LoginPage = () => {
           Войти
         </button>
       </form>
+      <p>
+        Нет аккаунта? <Link to="/register" style={styles.link}>Зарегистрируйтесь</Link>
+      </p>
     </div>
   );
 };
@@ -84,6 +87,10 @@ const styles = {
     border: "none",
     borderRadius: "4px",
     cursor: "pointer",
+  },
+  link: {
+    color: "#007BFF",
+    textDecoration: "none",
   },
 };
 
