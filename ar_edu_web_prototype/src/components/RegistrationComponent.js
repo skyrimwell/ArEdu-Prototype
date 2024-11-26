@@ -4,15 +4,29 @@ const RegisterPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
-  const handleRegister = (e) => {
+  const [ischecked, setIsChecked] = useState("")
+  const handleRegister = async (e) => {
     e.preventDefault();
+  
     if (password !== confirmPassword) {
       alert("Пароли не совпадают.");
-    } else if (email && password) {
-      alert(`Регистрация выполнена! Email: ${email}`);
-    } else {
-      alert("Пожалуйста, заполните все поля.");
+      return;
+    }
+  
+    try {
+      const response = await fetch("http://localhost:5000/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, ischecked }),
+      });
+  
+      if (response.ok) {
+        alert("Регистрация успешна!");
+      } else {
+        alert("Ошибка при регистрации");
+      }
+    } catch (error) {
+      console.error("Ошибка при регистрации:", error);
     }
   };
 
@@ -52,6 +66,16 @@ const RegisterPage = () => {
             style={styles.input}
             required
           />
+        </div>
+        <div stle={styles.inputGroup}>
+          <label htmlFor="teacher">Вы Преподаватель?</label>
+          <input
+            type="checkbox"
+            id="teacher"
+            checked={ischecked}
+            onChange={(e) => setIsChecked(e.target.checked)}
+          />
+          
         </div>
         <button type="submit" style={styles.button}>
           Зарегистрироваться

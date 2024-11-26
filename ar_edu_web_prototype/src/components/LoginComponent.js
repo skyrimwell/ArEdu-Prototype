@@ -5,12 +5,23 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (email && password) {
-      alert(`Вход выполнен! Email: ${email}`);
-    } else {
-      alert("Пожалуйста, заполните все поля.");
+  
+    try {
+      const response = await fetch("http://localhost:5000/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+  
+      if (response.ok) {
+        alert("Вход выполнен!");
+      } else {
+        alert("Неверные данные");
+      }
+    } catch (error) {
+      console.error("Ошибка при входе:", error);
     }
   };
 
