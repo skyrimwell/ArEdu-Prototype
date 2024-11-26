@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -16,7 +18,17 @@ const LoginPage = () => {
       });
   
       if (response.ok) {
-        alert("Вход выполнен!");
+        const data = await response.json();
+        alert(data.message);
+        if (data.accountType === 1){
+          alert("teacher");
+          navigate("/teacher-dashboard");
+          
+        } else {
+          alert("student");
+          navigate("/student-dashboard");
+          
+        }
       } else {
         alert("Неверные данные");
       }

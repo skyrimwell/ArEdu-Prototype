@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-
+import { Link } from "react-router-dom";
 const RegisterPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -81,6 +81,9 @@ const RegisterPage = () => {
           Зарегистрироваться
         </button>
       </form>
+      <p>
+       Уже есть в системе? <Link to="/" style={styles.link}>Войдите</Link>
+      </p>
     </div>
   );
 };
@@ -121,6 +124,10 @@ const styles = {
     border: "none",
     borderRadius: "4px",
     cursor: "pointer",
+  },
+  link: {
+    color: "#007BFF",
+    textDecoration: "none",
   },
 };
 

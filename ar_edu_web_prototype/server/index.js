@@ -51,7 +51,11 @@ app.post("/login", (req, res) => {
     if (err) {
       res.status(500).send("Ошибка сервера");
     } else if (results.length > 0) {
-      res.status(200).send("Вход выполнен!");
+      const user = results[0]
+      res.status(200).json({
+        message:"Вход выполнен",
+        accountType: user.accountType,
+      })
     } else {
       res.status(401).send("Неверные данные");
     }
