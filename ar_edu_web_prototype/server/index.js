@@ -4,13 +4,40 @@ const express = require("express");
 const mysql = require("mysql");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-
+const session = require("express-session");
+const MySQLStore = require("express-mysql-session")(session);
 const app = express();
 const PORT = 5000;
 
 
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true,
+}));
 app.use(bodyParser.json());
+
+const sessionStore = new MySQLStore({
+  host: process.env.DB_HOST, 
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+});
+
+app.use(
+  session({
+    key: "user_sid",
+    secret: process.env.COOKIE_TOKEN,
+    store: sessionStore,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 1000 * 60 * 60 * 24, // Срок действия куки (1 день)
+    },
+  })
+);
 
 const db = mysql.createConnection({
   host: process.env.DB_HOST, 
@@ -19,6 +46,17 @@ const db = mysql.createConnection({
   database: process.env.DB_NAME, 
 });
 
+
+const authMiddleware = (req, res, next) => {
+  if (req.session.user) {
+    next();
+  } else {
+    res.status(401).send("Необходима авторизация");
+  }
+};
+
+
+
 // Проверка соединения с базой
 db.connect((err) => {
   if (err) {
@@ -26,6 +64,10 @@ db.connect((err) => {
   } else {
     console.log("Успешное подключение к базе данных.");
   }
+});
+
+app.get("/protected-route", authMiddleware, (req, res) => {
+  res.send("Это защищенный маршрут");
 });
 
 // Роут для регистрации
@@ -50,14 +92,19 @@ app.post("/login", (req, res) => {
   db.query(query, [email, password], (err, results) => {
     if (err) {
       res.status(500).send("Ошибка сервера");
-    } else if (results.length > 0) {
-      const user = results[0]
-      res.status(200).json({
-        message:"Вход выполнен",
-        accountType: user.accountType,
-      })
+    } else if (results.length === 0) {
+      res.status(401).send("Неправильные email или пароль");
     } else {
-      res.status(401).send("Неверные данные");
+      const user = results[0];
+      req.session.user = {
+        id: user.id,
+        email: user.email,
+        accountType: user.accountType,
+      };
+      
+      console.log("Сессия создана:", req.session.user); // Отладочная информация
+
+      res.status(200).json({ message: "Вы вошли в систему", user: req.session.user });
     }
   });
 });
@@ -89,6 +136,14 @@ app.get("/teacher-rooms", (req, res) => {
       res.status(200).json({ rooms: results });
     }
   });
+});
+
+app.get("/check-auth", (req, res) => {
+  if (req.session.user) {
+    res.status(200).json({ user: req.session.user });
+  } else {
+    res.status(401).send("Необходима авторизация");
+  }
 });
 
 app.get("/room-students/:roomCode", (req, res) => {
@@ -157,6 +212,17 @@ app.get("/student-rooms/:studentId", (req, res) => {
     } else {
       res.status(200).json({ rooms: results });
     }
+  });
+});
+
+app.post("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).send("Ошибка при выходе");
+    }
+
+    res.clearCookie("user_sid", { path: "/" });
+    res.status(200).send("Вы вышли из системы");
   });
 });
 

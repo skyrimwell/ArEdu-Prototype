@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import withAuth from "./withAuth";
 
 const TeacherDashboard = () => {
   const [roomName, setRoomName] = useState(""); // Название комнаты
   const [roomCode, setRoomCode] = useState(""); // Сгенерированный код комнаты
   const [rooms, setRooms] = useState([]); // Список комнат преподавателя
   const [students, setStudents] = useState([]); // Список студентов в комнате
-
+  const navigate = useNavigate();
   // Создание комнаты
   const handleCreateRoom = async () => {
     try {
@@ -60,6 +62,25 @@ const TeacherDashboard = () => {
     fetchRooms(); // Загружаем список комнат при загрузке компонента
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/logout", {
+        method: "POST",
+        credentials: "include", // Передача куки
+      });
+  
+      if (response.ok) {
+        alert("Вы вышли из системы");
+        navigate("/login");
+      } else {
+        alert("Ошибка при выходе");
+      }
+    } catch (error) {
+      console.error("Ошибка при выходе:", error);
+    }
+  };
+
+  
   return (
     <div style={styles.container}>
       <h2>Личный кабинет преподавателя</h2>
@@ -111,6 +132,9 @@ const TeacherDashboard = () => {
           </ul>
         </div>
       )}
+      <div>
+        <button onClick={handleLogout}>Выйти</button>
+      </div>
     </div>
   );
 };
@@ -141,4 +165,4 @@ const styles = {
   },
 };
 
-export default TeacherDashboard;
+export default withAuth(TeacherDashboard);

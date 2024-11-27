@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-
+import withAuth from "./withAuth";
+import { useNavigate } from "react-router-dom";
 const StudentDashboard = () => {
   const [roomCode, setRoomCode] = useState(""); // Код комнаты
   const [rooms, setRooms] = useState([]); // Подключенные комнаты
-
+  const navigate = useNavigate();
   // Подключение к комнате
   const handleJoinRoom = async () => {
     try {
@@ -35,6 +36,24 @@ const StudentDashboard = () => {
       }
     } catch (error) {
       console.error("Ошибка при получении комнат:", error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/logout", {
+        method: "POST",
+        credentials: "include", // Передача куки
+      });
+  
+      if (response.ok) {
+        alert("Вы вышли из системы");
+        navigate("/login");
+      } else {
+        alert("Ошибка при выходе");
+      }
+    } catch (error) {
+      console.error("Ошибка при выходе:", error);
     }
   };
 
@@ -76,6 +95,9 @@ const StudentDashboard = () => {
           <p>Вы еще не подключены ни к одной комнате.</p>
         )}
       </div>
+      <div>
+        <button onClick={handleLogout}>Выйти</button>
+      </div>
     </div>
   );
 };
@@ -106,4 +128,4 @@ const styles = {
   },
 };
 
-export default StudentDashboard;
+export default withAuth(StudentDashboard);

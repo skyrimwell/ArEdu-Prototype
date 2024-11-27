@@ -4,23 +4,22 @@ import { useNavigate, Link } from "react-router-dom";
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-  
     try {
       const response = await fetch("http://localhost:5000/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
   
       if (response.ok) {
         const data = await response.json();
         alert(data.message);
-        if (data.accountType === 1){
+        if (data.user.accountType === 1){
           alert("teacher");
           navigate("/teacher-dashboard");
           
