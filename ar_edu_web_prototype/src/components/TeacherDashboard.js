@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import withAuth from "./withAuth";
+import ChatRoom from "./chatRoom";
 
 const TeacherDashboard = () => {
   const [roomName, setRoomName] = useState(""); // Название комнаты
@@ -57,6 +58,7 @@ const TeacherDashboard = () => {
       console.error("Ошибка при получении студентов:", error);
     }
   };
+
 
   useEffect(() => {
     fetchRooms(); // Загружаем список комнат при загрузке компонента
@@ -132,6 +134,15 @@ const TeacherDashboard = () => {
           </ul>
         </div>
       )}
+
+      <div>
+        {rooms.map((room) => (
+          <div key={room.code} style={styles.room}>
+            <ChatRoom roomId={room.code} />
+          </div>
+        ))}
+      </div>
+
       <div>
         <button onClick={handleLogout}>Выйти</button>
       </div>

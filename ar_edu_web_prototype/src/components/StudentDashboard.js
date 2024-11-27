@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import withAuth from "./withAuth";
 import { useNavigate } from "react-router-dom";
+import ChatRoom from "./chatRoom";
+
 const StudentDashboard = () => {
   const [roomCode, setRoomCode] = useState(""); // Код комнаты
   const [rooms, setRooms] = useState([]); // Подключенные комнаты
@@ -33,6 +35,7 @@ const StudentDashboard = () => {
       if (response.ok) {
         const data = await response.json();
         setRooms(data.rooms);
+
       }
     } catch (error) {
       console.error("Ошибка при получении комнат:", error);
@@ -91,9 +94,13 @@ const StudentDashboard = () => {
               </p>
             </div>
           ))
+          
         ) : (
           <p>Вы еще не подключены ни к одной комнате.</p>
         )}
+      </div>
+      <div>
+        <ChatRoom roomId={roomCode} />
       </div>
       <div>
         <button onClick={handleLogout}>Выйти</button>
