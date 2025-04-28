@@ -4,24 +4,28 @@ import withAuth from "./withAuth";
 import ChatRoom from "./chatRoom";
 
 const TeacherDashboard = () => {
-  const [roomName, setRoomName] = useState(""); // Название комнаты
-  const [roomCode, setRoomCode] = useState(""); // Сгенерированный код комнаты
-  const [rooms, setRooms] = useState([]); // Список комнат преподавателя
-  const [students, setStudents] = useState([]); // Список студентов в комнате
+  const [roomName, setRoomName] = useState("");
+  const [roomCode, setRoomCode] = useState("");
+  const [rooms, setRooms] = useState([]);
+  const [students, setStudents] = useState([]);
   const navigate = useNavigate();
-  // Создание комнаты
+  const token = localStorage.getItem('token');
+
   const handleCreateRoom = async () => {
     try {
       const response = await fetch("http://localhost:5000/create-room", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({ roomName }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        setRoomCode(data.roomCode); // Устанавливаем сгенерированный код комнаты
-        fetchRooms(); // Обновляем список комнат
+        setRoomCode(data.roomCode);
+        fetchRooms();
         alert(`Комната "${roomName}" создана с кодом: ${data.roomCode}`);
       } else {
         alert("Ошибка при создании комнаты");
@@ -31,10 +35,13 @@ const TeacherDashboard = () => {
     }
   };
 
-  // Получение списка комнат
   const fetchRooms = async () => {
     try {
-      const response = await fetch("http://localhost:5000/teacher-rooms");
+      const response = await fetch("http://localhost:5000/teacher-rooms", {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
       if (response.ok) {
         const data = await response.json();
         setRooms(data.rooms);
@@ -44,12 +51,13 @@ const TeacherDashboard = () => {
     }
   };
 
-  // Получение списка студентов для конкретной комнаты
   const fetchStudents = async (roomCode) => {
     try {
-      const response = await fetch(
-        `http://localhost:5000/room-students/${roomCode}`
-      );
+      const response = await fetch(`http://localhost:5000/room-students/${roomCode}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
       if (response.ok) {
         const data = await response.json();
         setStudents(data.students);
@@ -59,18 +67,17 @@ const TeacherDashboard = () => {
     }
   };
 
-
   useEffect(() => {
-    fetchRooms(); // Загружаем список комнат при загрузке компонента
+    fetchRooms();
   }, []);
 
   const handleLogout = async () => {
     try {
       const response = await fetch("http://localhost:5000/logout", {
         method: "POST",
-        credentials: "include", // Передача куки
+        credentials: "include",
       });
-  
+
       if (response.ok) {
         alert("Вы вышли из системы");
         navigate("/login");
@@ -86,8 +93,6 @@ const TeacherDashboard = () => {
   return (
     <div style={styles.container}>
       <h2>Личный кабинет преподавателя</h2>
-
-      {/* Создание комнаты */}
       <div style={styles.section}>
         <h3>Создать комнату</h3>
         <input
@@ -105,7 +110,6 @@ const TeacherDashboard = () => {
         )}
       </div>
 
-      {/* Список комнат */}
       <div style={styles.section}>
         <h3>Мои комнаты</h3>
         {rooms.map((room) => (
@@ -123,7 +127,6 @@ const TeacherDashboard = () => {
         ))}
       </div>
 
-      {/* Список студентов */}
       {students.length > 0 && (
         <div style={styles.section}>
           <h3>Студенты в комнате</h3>

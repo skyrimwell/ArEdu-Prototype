@@ -24,3 +24,8 @@ yarn-error.log*
 ar_edu_web_prototype/server/.env
 ar_edu_web_prototype/server/node_modules
 ar_edu_web_prototype/node_modules
+SqlQueryStress.exe
+WorkloadTools_x64.exe
+apache-jmeter-5.6.3.zip
+apache-jmeter-5.6.3/apache-jmeter-5.6.3/bin/ApacheJMeter.jar
+apache-jmeter-5.6.3/

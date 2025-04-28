@@ -22,14 +22,17 @@ const LoginPage = () => {
         if (data.user.accountType === 1){
           alert("teacher");
           navigate("/teacher-dashboard");
-          
+          localStorage.setItem("token", data.token);
+          document.cookie = `token=${data.token}; path=/;`;
         } else {
           alert("student");
           navigate("/student-dashboard");
-          
+          localStorage.setItem("token", data.token);
+          document.cookie = `token=${data.token}; path=/;`;
         }
+        
       } else {
-        alert("Неверные данные");
+        alert();
       }
     } catch (error) {
       console.error("Ошибка при входе:", error);

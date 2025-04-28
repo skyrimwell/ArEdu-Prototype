@@ -2,23 +2,27 @@ import React, { useState, useEffect } from "react";
 import withAuth from "./withAuth";
 import { useNavigate } from "react-router-dom";
 import ChatRoom from "./chatRoom";
+import { jwtDecode } from "jwt-decode"; 
 
 const StudentDashboard = () => {
-  const [roomCode, setRoomCode] = useState(""); // Код комнаты
-  const [rooms, setRooms] = useState([]); // Подключенные комнаты
+  const [roomCode, setRoomCode] = useState("");
+  const [rooms, setRooms] = useState([]);
   const navigate = useNavigate();
-  // Подключение к комнате
+  const token = localStorage.getItem('token');
   const handleJoinRoom = async () => {
     try {
       const response = await fetch("http://localhost:5000/join-room", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomCode, studentId: 1 }), // Используйте реальный ID студента
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ token, roomCode }),
       });
 
       if (response.ok) {
         alert("Вы успешно подключились к комнате!");
-        fetchRooms(); // Обновляем список комнат
+        fetchRooms();
       } else {
         const error = await response.json();
         alert(error.message || "Ошибка подключения к комнате");
@@ -28,15 +32,21 @@ const StudentDashboard = () => {
     }
   };
 
-  // Получение подключенных комнат
+
   const fetchRooms = async () => {
     try {
-      const response = await fetch("http://localhost:5000/student-rooms/1"); // Используйте реальный ID студента
+      const decodedToken = jwtDecode(token);
+      const userId = decodedToken.id
+      const response = await fetch(`http://localhost:5000/student-rooms/${userId}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
       if (response.ok) {
         const data = await response.json();
         setRooms(data.rooms);
-
       }
+
     } catch (error) {
       console.error("Ошибка при получении комнат:", error);
     }
@@ -46,9 +56,9 @@ const StudentDashboard = () => {
     try {
       const response = await fetch("http://localhost:5000/logout", {
         method: "POST",
-        credentials: "include", // Передача куки
+        credentials: "include",
       });
-  
+
       if (response.ok) {
         alert("Вы вышли из системы");
         navigate("/login");
@@ -61,14 +71,12 @@ const StudentDashboard = () => {
   };
 
   useEffect(() => {
-    fetchRooms(); // Загружаем подключенные комнаты при загрузке компонента
+    fetchRooms();
   }, []);
 
   return (
     <div style={styles.container}>
       <h2>Личный кабинет студента</h2>
-
-      {/* Подключение к комнате */}
       <div style={styles.section}>
         <h3>Подключиться к комнате</h3>
         <input
@@ -83,7 +91,6 @@ const StudentDashboard = () => {
         </button>
       </div>
 
-      {/* Список подключенных комнат */}
       <div style={styles.section}>
         <h3>Мои комнаты</h3>
         {rooms.length > 0 ? (

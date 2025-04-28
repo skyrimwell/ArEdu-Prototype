@@ -1,0 +1,302 @@
+require('dotenv').config();
+
+const express = require('express');
+const mysql = require('mysql2/promise');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
+const { Server } = require('socket.io');
+const http = require('http');
+const cookie = require('cookie');
+
+const app = express();
+const PORT = 5000;
+const JWT_SECRET = process.env.COOKIE_TOKEN; // Секрет для JWT
+
+app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
+app.use(express.json());
+app.use(cookieParser());
+
+const db = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+});
+
+// Регистрация
+app.post('/register', async (req, res) => {
+  const { email, password, ischecked } = req.body;
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const accountType = ischecked ? 1 : 0; // 1 - teacher, 0 - student
+
+  try {
+    await db.query('INSERT INTO users (email, password, accountType) VALUES (?, ?, ?)', [email, hashedPassword, accountType]);
+    res.json({ success: true, message: 'Регистрация успешна' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Ошибка регистрации' });
+  }
+});
+
+// Логин
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+    const user = users[0];
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Неверные данные' });
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
+      return res.status(400).json({ success: false, message: 'Неверные данные' });
+    }
+
+    const token = jwt.sign({ id: user.id, accountType: user.accountType }, JWT_SECRET, { expiresIn: '1h' });
+
+    res.json({ success: true, message: 'Вход успешен', token, user: { id: user.id, email: user.email, accountType: user.accountType } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Ошибка авторизации' });
+  }
+});
+
+// Проверка авторизации 
+app.get('/check-auth', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ success: false, message: 'Нет токена' });
+
+  const token = authHeader.split(' ')[1];
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    res.json({ success: true, user: decoded });
+  } catch (err) {
+    res.status(401).json({ success: false, message: 'Невалидный токен' });
+  }
+});
+
+// Профиль 
+app.get('/profile', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ success: false, message: 'Нет токена' });
+
+  const token = authHeader.split(' ')[1];
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    res.json({ success: true, message: 'Токен валидный', data: decoded });
+  } catch (err) {
+    res.status(401).json({ success: false, message: 'Невалидный токен' });
+  }
+});
+
+// комнаты по айди
+app.get('/student-rooms/:studentId', async (req, res) => {
+  const { studentId } = req.params;
+
+  try {
+    const [rooms] = await db.query(
+      'SELECT DISTINCT rooms.* FROM rooms JOIN room_students ON rooms.code = room_students.room_code WHERE room_students.student_id = ?',
+      [studentId]
+    );
+
+    res.json({ success: true, rooms });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Ошибка получения комнат' });
+  }
+});
+
+app.get('/teacher-rooms', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ success: false, message: 'Нет токена' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const userId = decoded.id;
+    const accountType = decoded.accountType;
+
+    if (accountType !== 1) {
+      return res.status(403).json({ success: false, message: 'Нет прав доступа' });
+    }
+
+    const [rooms] = await db.query('SELECT * FROM rooms WHERE teacher_id = ?', [userId]);
+    res.json({ success: true, rooms });
+  } catch (err) {
+    console.error(err);
+    res.status(401).json({ success: false, message: 'Ошибка токена или сервера' });
+  }
+});
+
+// Создание комнаты
+app.post('/create-room', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ success: false, message: 'Нет токена' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  const { roomName } = req.body;
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const userId = decoded.id;
+    const accountType = decoded.accountType;
+
+    if (accountType !== 1) {
+      return res.status(403).json({ success: false, message: 'Нет прав доступа' });
+    }
+
+    // Генерация уникального кода комнаты
+    const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    await db.query('INSERT INTO rooms (name, code, teacher_id) VALUES (?, ?, ?)', [roomName, roomCode, userId]);
+
+    res.json({ success: true, roomCode });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Ошибка сервера при создании комнаты' });
+  }
+});
+
+app.get('/room-students/:roomCode', async (req, res) => {
+  const { roomCode } = req.params;
+
+  try {
+    const [students] = await db.query(
+      'SELECT users.id, users.email FROM room_students JOIN users ON room_students.student_id = users.id WHERE room_students.room_code = ?',
+      [roomCode]
+    );
+    res.json({ success: true, students });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Ошибка получения студентов' });
+  }
+});
+
+// комнаты по айди преподавателя
+app.get('/teacher-rooms/:teacherId', async (req, res) => {
+  const { teacherId } = req.params;
+
+  try {
+    const [rooms] = await db.query(
+      'SELECT * FROM rooms WHERE creator_id = ?',
+      [teacherId]
+    );
+
+    res.json({ success: true, rooms });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Ошибка получения комнат преподавателя' });
+  }
+});
+
+// зайти в комнату 
+app.post('/join-room', async (req, res) => {
+  const { token, roomCode } = req.body;
+
+  if (!token || !roomCode) {
+    return res.status(400).json({ success: false, message: 'Требуется токен и код комнаты' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const userId = decoded.id;
+
+    const [rooms] = await db.query('SELECT * FROM rooms WHERE code = ?', [roomCode]);
+    if (rooms.length === 0) {
+      return res.status(404).json({ success: false, message: 'Комната не найдена' });
+    }
+
+    const [existing] = await db.query('SELECT * FROM room_students WHERE room_code = ? AND student_id = ?', [roomCode, userId]);
+    if (existing.length > 0) {
+      return res.json({ success: true, message: 'Уже в комнате' });
+    }
+
+    await db.query('INSERT INTO room_students (room_code, student_id) VALUES (?, ?)', [roomCode, userId]);
+
+    res.json({ success: true, message: 'Успешно присоединился к комнате' });
+  } catch (err) {
+    console.error(err);
+    res.status(401).json({ success: false, message: 'Ошибка токена или сервера' });
+  }
+});
+
+// студенты в комнате
+app.post('/get-room-students', async (req, res) => {
+  const { token, roomCode } = req.body;
+
+  if (!token || !roomCode) {
+    return res.status(400).json({ success: false, message: 'Требуется токен и код комнаты' });
+  }
+
+  try {
+    jwt.verify(token, JWT_SECRET);
+
+    const [rooms] = await db.query('SELECT * FROM rooms WHERE code = ?', [roomCode]);
+    if (rooms.length === 0) {
+      return res.status(404).json({ success: false, message: 'Комната не найдена' });
+    }
+
+    const [students] = await db.query(
+      'SELECT users.id, users.email, users.accountType FROM room_students JOIN users ON room_students.student_id = users.id WHERE room_students.room_code = ?',
+      [roomCode]
+    );
+
+    res.json({ success: true, students });
+  } catch (err) {
+    console.error(err);
+    res.status(401).json({ success: false, message: 'Ошибка токена или сервера' });
+  }
+});
+
+// HTTP сервер
+const httpServer = http.createServer(app);
+
+httpServer.listen(PORT, () => {
+  console.log(`HTTP сервер на порту ${PORT}`);
+});
+
+// --- WebSocket сервер с помощью socket.io ---
+const io = new Server(httpServer, {
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
+// чат
+io.on("connection", (socket) => {
+  try {
+    const cookies = cookie.parse(socket.handshake.headers.cookie || '');
+    const token = cookies.token; // предполагаю, что токен лежит в cookie "token"
+    
+    if (!token) {
+      console.log("Нет токена при подключении через сокет.");
+      socket.disconnect();
+      return;
+    }
+
+    jwt.verify(token, secret, (err, decoded) => {
+      if (err) {
+        console.log("Ошибка JWT при подключении через сокет:", err.message);
+        socket.disconnect();
+      } else {
+        console.log("Пользователь подключился через сокет:", decoded.username || decoded.id);
+      }
+    });
+  } catch (error) {
+    console.error("Ошибка при разборе токена в сокет-соединении:", error.message);
+    socket.disconnect();
+  }
+});
