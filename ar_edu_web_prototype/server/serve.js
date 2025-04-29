@@ -275,28 +275,40 @@ const io = new Server(httpServer, {
   },
 });
 
-// чат
 io.on("connection", (socket) => {
-  try {
-    const cookies = cookie.parse(socket.handshake.headers.cookie || '');
-    const token = cookies.token; // предполагаю, что токен лежит в cookie "token"
-    
-    if (!token) {
-      console.log("Нет токена при подключении через сокет.");
+  const cookies = cookie.parse(socket.handshake.headers.cookie || '');
+  const token = cookies.token;
+
+  if (!token) {
+    console.log("Нет токена при подключении через сокет.");
+    socket.disconnect();
+    return;
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    if (err) {
+      console.log("Ошибка JWT при подключении через сокет:", err.message);
       socket.disconnect();
       return;
     }
 
-    jwt.verify(token, secret, (err, decoded) => {
-      if (err) {
-        console.log("Ошибка JWT при подключении через сокет:", err.message);
-        socket.disconnect();
-      } else {
-        console.log("Пользователь подключился через сокет:", decoded.username || decoded.id);
-      }
+    console.log("Пользователь подключился через сокет:", decoded.email || decoded.id);
+
+    socket.on("join_room", (roomId) => {
+      socket.join(roomId);
+      console.log(`Пользователь ${decoded.id} присоединился к комнате ${roomId}`);
     });
-  } catch (error) {
-    console.error("Ошибка при разборе токена в сокет-соединении:", error.message);
-    socket.disconnect();
-  }
+
+    socket.on("send_message", (data) => {
+      console.log("Новое сообщение:", data);
+      io.to(data.room).emit("receive_message", {
+        sender: decoded.email || `Пользователь ${decoded.id}`,
+        content: data.content,
+      });
+    });
+
+    socket.on("disconnect", () => {
+      console.log(`Пользователь ${decoded.id} отключился`);
+    });
+  });
 });

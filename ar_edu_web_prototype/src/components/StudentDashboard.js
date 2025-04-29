@@ -107,7 +107,11 @@ const StudentDashboard = () => {
         )}
       </div>
       <div>
-        <ChatRoom roomId={roomCode} />
+        {rooms.map((room) => (
+          <div key={room.code} style={styles.room}>
+            <ChatRoom roomId={room.code} />
+          </div>
+        ))}
       </div>
       <div>
         <button onClick={handleLogout}>Выйти</button>
