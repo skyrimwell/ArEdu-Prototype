@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import FileSystemComponent from "./FileSystemComponent";
 import withAuth from "./withAuth";
 import ChatRoom from "./chatRoom";
 
@@ -145,7 +146,13 @@ const TeacherDashboard = () => {
           </div>
         ))}
       </div>
-
+      <div>
+        {rooms.map((room) => (
+          <div key={room.code} style={styles.room}>
+            <FileSystemComponent roomCode={room.code} isTeacher={true} />
+          </div>
+        ))}
+      </div>
       <div>
         <button onClick={handleLogout}>Выйти</button>
       </div>

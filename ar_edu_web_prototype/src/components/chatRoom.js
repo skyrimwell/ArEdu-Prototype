@@ -32,7 +32,7 @@ const ChatRoom = ({ roomId }) => {
     };
   
     socketRef.current.emit("send_message", messageData);
-    setMessage(""); // очищаем поле ввода
+    setMessage("");
   };
   
 

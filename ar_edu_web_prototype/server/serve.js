@@ -9,10 +9,14 @@ const cookieParser = require('cookie-parser');
 const { Server } = require('socket.io');
 const http = require('http');
 const cookie = require('cookie');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const ROOMS_UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
 
 const app = express();
 const PORT = 5000;
-const JWT_SECRET = process.env.COOKIE_TOKEN; // Секрет для JWT
+const JWT_SECRET = process.env.COOKIE_TOKEN;
 
 app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
 app.use(express.json());
@@ -24,6 +28,10 @@ const db = mysql.createPool({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
 });
+
+if (!fs.existsSync(ROOMS_UPLOAD_DIR)) {
+  fs.mkdirSync(ROOMS_UPLOAD_DIR, { recursive: true });
+}
 
 // Регистрация
 app.post('/register', async (req, res) => {
@@ -258,6 +266,52 @@ app.post('/get-room-students', async (req, res) => {
     res.status(401).json({ success: false, message: 'Ошибка токена или сервера' });
   }
 });
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const roomCode = req.params.roomCode;
+    const roomDir = path.join(ROOMS_UPLOAD_DIR, roomCode);
+    if (!fs.existsSync(roomDir)) {
+      fs.mkdirSync(roomDir, { recursive: true });
+    }
+    cb(null, roomDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  },
+});
+const upload = multer({ storage });
+
+app.post('/upload/:roomCode', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'Файл не загружен' });
+  }
+  res.json({ success: true, message: 'Файл загружен' });
+});
+
+app.get('/files/:roomCode', (req, res) => {
+  const roomDir = path.join(ROOMS_UPLOAD_DIR, req.params.roomCode);
+  if (!fs.existsSync(roomDir)) {
+    return res.json({ success: true, files: [] });
+  }
+
+  fs.readdir(roomDir, (err, files) => {
+    if (err) {
+      console.error('Ошибка чтения директории:', err);
+      return res.status(500).json({ success: false, message: 'Ошибка чтения файлов' });
+    }
+    res.json({ success: true, files });
+  });
+});
+
+app.get('/download/:roomCode/:filename', (req, res) => {
+  const filePath = path.join(ROOMS_UPLOAD_DIR, req.params.roomCode, req.params.filename);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ success: false, message: 'Файл не найден' });
+  }
+  res.download(filePath);
+});
+
 
 // HTTP сервер
 const httpServer = http.createServer(app);

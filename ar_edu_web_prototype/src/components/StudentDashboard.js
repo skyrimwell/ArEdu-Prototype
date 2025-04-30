@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import withAuth from "./withAuth";
+import FileSystemComponent from "./FileSystemComponent";
 import { useNavigate } from "react-router-dom";
 import ChatRoom from "./chatRoom";
 import { jwtDecode } from "jwt-decode"; 
+
 
 const StudentDashboard = () => {
   const [roomCode, setRoomCode] = useState("");
@@ -111,6 +113,11 @@ const StudentDashboard = () => {
           <div key={room.code} style={styles.room}>
             <ChatRoom roomId={room.code} />
           </div>
+        ))}
+      </div>
+      <div>
+        {rooms.map((room) => (  
+          <FileSystemComponent roomCode={room.code} isTeacher={false} />
         ))}
       </div>
       <div>
