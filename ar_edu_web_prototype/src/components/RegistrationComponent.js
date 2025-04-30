@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import styles from "./styles/regStyles";
 const RegisterPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -68,14 +69,14 @@ const RegisterPage = () => {
           />
         </div>
         <div stle={styles.inputGroup}>
-          <label htmlFor="teacher">Вы Преподаватель?</label>
-          <input
-            type="checkbox"
-            id="teacher"
-            checked={ischecked}
-            onChange={(e) => setIsChecked(e.target.checked)}
-          />
-          
+          <label htmlFor="teacher" style={styles.checkboxLabel}>Вы Преподаватель?
+            <input
+              type="checkbox"
+              id="teacher"
+              checked={ischecked}
+              onChange={(e) => setIsChecked(e.target.checked)}
+            />
+          </label>  
         </div>
         <button type="submit" style={styles.button}>
           Зарегистрироваться
@@ -86,49 +87,6 @@ const RegisterPage = () => {
       </p>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    height: "100vh",
-    backgroundColor: "#f7f7f7",
-  },
-  title: {
-    marginBottom: "20px",
-  },
-  form: {
-    width: "300px",
-    padding: "20px",
-    borderRadius: "5px",
-    backgroundColor: "#fff",
-    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-  },
-  inputGroup: {
-    marginBottom: "15px",
-  },
-  input: {
-    width: "100%",
-    padding: "10px",
-    border: "1px solid #ccc",
-    borderRadius: "4px",
-  },
-  button: {
-    width: "100%",
-    padding: "10px",
-    backgroundColor: "#28a745",
-    color: "#fff",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-  },
-  link: {
-    color: "#007BFF",
-    textDecoration: "none",
-  },
 };
 
 export default RegisterPage;

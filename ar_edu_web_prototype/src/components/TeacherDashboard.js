@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import FileSystemComponent from "./FileSystemComponent";
 import withAuth from "./withAuth";
+import styles from "./styles/TStyles";
 import ChatRoom from "./chatRoom";
 
 const TeacherDashboard = () => {
@@ -92,98 +93,74 @@ const TeacherDashboard = () => {
 
   
   return (
-    <div style={styles.container}>
-      <h2>Личный кабинет преподавателя</h2>
-      <div style={styles.section}>
-        <h3>Создать комнату</h3>
-        <input
-          type="text"
-          placeholder="Название комнаты"
-          value={roomName}
-          onChange={(e) => setRoomName(e.target.value)}
-          style={styles.input}
-        />
-        <button onClick={handleCreateRoom} style={styles.button}>
-          Создать
-        </button>
-        {roomCode && (
-          <p>Код для подключения: <strong>{roomCode}</strong></p>
-        )}
-      </div>
-
-      <div style={styles.section}>
-        <h3>Мои комнаты</h3>
-        {rooms.map((room) => (
-          <div key={room.code} style={styles.room}>
-            <p>
-              <strong>{room.name}</strong> (Код: {room.code})
-            </p>
-            <button
-              onClick={() => fetchStudents(room.code)}
-              style={styles.button}
-            >
-              Показать студентов
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {students.length > 0 && (
+    <div style={styles.container('#3b6630')}>
+      <div style={styles.leftPanel}>
+        <h2>Личный кабинет преподавателя</h2>
+  
         <div style={styles.section}>
-          <h3>Студенты в комнате</h3>
-          <ul>
-            {students.map((student) => (
-              <li key={student.id}>{student.email}</li>
-            ))}
-          </ul>
+          <h3>Создать комнату</h3>
+          <input
+            type="text"
+            placeholder="Название комнаты"
+            value={roomName}
+            onChange={(e) => setRoomName(e.target.value)}
+            style={styles.input}
+          />
+          <button onClick={handleCreateRoom} style={styles.button}>
+            Создать
+          </button>
+          {roomCode && (
+            <p>Код для подключения: <strong>{roomCode}</strong></p>
+          )}
         </div>
-      )}
-
-      <div>
-        {rooms.map((room) => (
-          <div key={room.code} style={styles.room}>
-            <ChatRoom roomId={room.code} />
+  
+        <div style={styles.section}>
+          <h3>Мои комнаты</h3>
+          {rooms.map((room) => (
+            <div key={room.code} style={styles.room}>
+              <p><strong>{room.name}</strong> (Код: {room.code})</p>
+              <button onClick={() => fetchStudents(room.code)} style={styles.button}>
+                Показать студентов
+              </button>
+            </div>
+          ))}
+        </div>
+  
+        {students.length > 0 && (
+          <div style={styles.section}>
+            <h3>Студенты в комнате</h3>
+            <ul>
+              {students.map((student) => (
+                <ul key={student.id}>{student.email}</ul>
+              ))}
+            </ul>
           </div>
-        ))}
-      </div>
-      <div>
+        )}
+  
         {rooms.map((room) => (
           <div key={room.code} style={styles.room}>
             <FileSystemComponent roomCode={room.code} isTeacher={true} />
           </div>
         ))}
       </div>
-      <div>
-        <button onClick={handleLogout}>Выйти</button>
+  
+      <div style={styles.rightPanel}>
+        <h3>Активные комнаты</h3>
+        {rooms.map((room) => (
+          <div key={room.code} style={styles.room}>
+            <p><strong>Комната № {room.code}</strong></p>
+            <ChatRoom roomId={room.code} />
+          </div>
+        ))}
+        <button style={{ ...styles.button, marginTop: '20px' }}> 
+          Подключиться к VR комнате в роли ведущего
+        </button>
+        <button onClick={handleLogout} style={{ ...styles.button, marginTop: '20px' }}>
+          Выйти
+        </button>
       </div>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    padding: "20px",
-  },
-  section: {
-    marginBottom: "20px",
-  },
-  input: {
-    padding: "10px",
-    marginRight: "10px",
-    border: "1px solid #ccc",
-    borderRadius: "4px",
-  },
-  button: {
-    padding: "10px",
-    backgroundColor: "#28a745",
-    color: "#fff",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-  },
-  room: {
-    marginBottom: "10px",
-  },
 };
 
 export default withAuth(TeacherDashboard);

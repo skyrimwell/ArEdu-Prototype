@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
+import chatstyles from "./styles/chatStyles";
 
-const ChatRoom = ({ roomId }) => {
+const ChatRoom = ({ roomId, styles }) => {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const socketRef = useRef(null);
@@ -37,9 +38,9 @@ const ChatRoom = ({ roomId }) => {
   
 
   return (
-    <div>
-      <h2>Чат комнаты: {roomId}</h2>
-      <div style={{ border: "1px solid black", height: "300px", overflowY: "scroll" }}>
+    <div style={chatstyles.chatContainer}>
+      <h3>Чат</h3>
+      <div style={chatstyles.chatBox}>
         {messages.map((msg, index) => (
           <p key={index}>
             <strong>{msg.sender}:</strong> {msg.content}
@@ -51,8 +52,11 @@ const ChatRoom = ({ roomId }) => {
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         placeholder="Введите сообщение"
+        style={chatstyles.chatInput}
       />
-      <button onClick={sendMessage}>Отправить</button>
+      <button onClick={sendMessage} style={chatstyles.chatButton}>
+        Отправить
+      </button>
     </div>
   );
 };

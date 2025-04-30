@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
+import fileBlockStyles from "./styles/FileSystemStyles";
 const FileSystemComponent = ({ roomCode, isTeacher }) => {
   const [files, setFiles] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -50,36 +50,43 @@ const FileSystemComponent = ({ roomCode, isTeacher }) => {
   };
 
   return (
-    <div style={{ border: '1px solid #ccc', padding: '1rem', marginTop: '1rem' }}>
-      <h3>Файлы комнаты ({roomCode})</h3>
-
+    <div style={fileBlockStyles.container}>
+      <h3 style={fileBlockStyles.title}>Файлы комнаты ({roomCode})</h3>
+  
       {isTeacher && (
-        <div style={{ marginBottom: '1rem' }}>
+        <div style={fileBlockStyles.uploadContainer}>
           <input
             type="file"
             onChange={(e) => setSelectedFile(e.target.files[0])}
             disabled={uploading}
+            style={fileBlockStyles.fileInput}
           />
-          <button onClick={handleUpload} disabled={!selectedFile || uploading}>
+          <button 
+            onClick={handleUpload} 
+            disabled={!selectedFile || uploading}
+            style={fileBlockStyles.uploadButton}
+          >
             {uploading ? 'Загрузка...' : 'Загрузить'}
           </button>
         </div>
       )}
-
-      <ul>
+  
+      <ul style={fileBlockStyles.fileList}>
         {files.length > 0 ? (
           files.map((file, idx) => (
-            <li key={idx}>
+            <li key={idx} style={fileBlockStyles.fileItem}>
               <a
                 href={`http://localhost:5000/download/${roomCode}/${encodeURIComponent(file)}`}
                 target="_blank"
-                rel="noopener noreferrer">
+                rel="noopener noreferrer"
+                style={fileBlockStyles.fileLink}
+              >
                 {file}
               </a>
             </li>
           ))
         ) : (
-          <li>Файлов пока нет</li>
+          <li style={fileBlockStyles.fileItem}>Файлов пока нет</li>
         )}
       </ul>
     </div>

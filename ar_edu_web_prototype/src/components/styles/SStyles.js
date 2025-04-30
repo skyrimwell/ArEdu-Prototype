@@ -1,0 +1,128 @@
+
+const styles = {
+    container: (bgColor) => ({
+      backgroundColor: bgColor,
+      color: 'white',
+      padding: '40px',
+      minHeight: '100vh',
+      boxSizing: 'border-box',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'flex-start',
+      gap: '30px',
+      fontFamily: 'Arial, sans-serif',
+    }),
+    leftPanel: {
+      width: '60%',
+      backgroundColor: 'white',
+      borderRadius: '25px',
+      padding: '30px',
+      color: 'black',
+      boxSizing: 'border-box',
+    },
+    rightPanel: {
+      width: '35%',
+      backgroundColor: 'white',
+      borderRadius: '25px',
+      padding: '30px',
+      color: 'black',
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+    },
+    section: {
+      marginBottom: '25px',
+    },
+    room: {
+      marginBottom: '10px',
+    },
+    input: {
+      width: '100%',
+      padding: '12px',
+      marginBottom: '10px',
+      fontSize: '16px',
+      borderRadius: '8px',
+      border: '1px solid #ccc',
+      boxSizing: 'border-box',
+    },
+    textarea: {
+      width: '100%',
+      height: '200px',
+      padding: '12px',
+      fontSize: '16px',
+      borderRadius: '8px',
+      border: '1px solid #ccc',
+      resize: 'none',
+      marginBottom: '15px',
+      boxSizing: 'border-box',
+    },
+    button: {
+      backgroundColor: '#6c7ae0', // Фиолетовая кнопка
+      color: 'white',
+      padding: '12px 25px',
+      borderRadius: '20px',
+      border: 'none',
+      cursor: 'pointer',
+      fontSize: '16px',
+      marginTop: '5px',
+      transition: 'background-color 0.2s',
+      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
+    },
+    fileSection: {
+      border: '1px solid #ccc',
+      borderRadius: '15px',
+      padding: '20px',
+      marginTop: '20px',
+    },
+    page: {
+      fontFamily: "'Segoe UI', sans-serif",
+      fontSize: '16px',
+      color: '#000',
+    },
+    heading1: {
+      fontSize: '24px',
+      fontWeight: 'bold',
+      marginBottom: '10px',
+    },
+    heading2: {
+      fontSize: '20px',
+      fontWeight: '600',
+      marginTop: '20px',
+      marginBottom: '8px',
+    },
+    text: {
+      fontSize: '16px',
+      marginBottom: '5px',
+    },
+    input: {
+      fontSize: '16px',
+      padding: '10px',
+      borderRadius: '8px',
+      border: '1px solid #ccc',
+      marginBottom: '10px',
+      width: '100%',
+      boxSizing: 'border-box',
+    },
+    section: {
+      backgroundColor: 'white',
+      padding: '20px',
+      borderRadius: '20px',
+      marginBottom: '20px',
+      boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+    },
+    listSection: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+    },
+    ulList: {
+      listStyleType: 'none',
+      padding: 0,
+      margin: 0,
+      width: '100%',
+    },
+  };
+  
+  
+export default styles;  

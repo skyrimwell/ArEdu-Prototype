@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-
+import styles from "./styles/loginStyles";
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -74,49 +74,6 @@ const LoginPage = () => {
       </p>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    height: "100vh",
-    backgroundColor: "#f7f7f7",
-  },
-  title: {
-    marginBottom: "20px",
-  },
-  form: {
-    width: "300px",
-    padding: "20px",
-    borderRadius: "5px",
-    backgroundColor: "#fff",
-    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-  },
-  inputGroup: {
-    marginBottom: "15px",
-  },
-  input: {
-    width: "100%",
-    padding: "10px",
-    border: "1px solid #ccc",
-    borderRadius: "4px",
-  },
-  button: {
-    width: "100%",
-    padding: "10px",
-    backgroundColor: "#007BFF",
-    color: "#fff",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-  },
-  link: {
-    color: "#007BFF",
-    textDecoration: "none",
-  },
 };
 
 export default LoginPage;
