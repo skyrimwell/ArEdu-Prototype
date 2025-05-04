@@ -13,7 +13,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const ROOMS_UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
-
+const { spawn } = require('child_process');
 const app = express();
 const PORT = 5000;
 const JWT_SECRET = process.env.COOKIE_TOKEN;
@@ -310,6 +310,91 @@ app.get('/download/:roomCode/:filename', (req, res) => {
     return res.status(404).json({ success: false, message: 'Файл не найден' });
   }
   res.download(filePath);
+});
+
+app.post('/launch-app-teacher', async (req, res) => {
+  const { roomCode } = req.body;
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !roomCode) {
+    return res.status(400).json({ success: false, message: 'Нужен токен и код комнаты' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    jwt.verify(token, JWT_SECRET);
+
+    const exePath = path.join(__dirname, '..', '..', 'VR_Edu_Prototype', 'VREdu.exe');
+    const args = [`RoomMap?listen`, `-jwt=${token}`, `-roomCode=${roomCode}`];
+
+    const child = spawn(exePath, args, {
+      detached: true,
+      stdio: 'ignore'
+    });
+
+    child.unref(); 
+
+    return res.json({ success: true, message: 'Сервер запускается' });
+
+  } catch (err) {
+    console.error("Ошибка токена или запуска:", err);
+    return res.status(401).json({ success: false, message: 'Невалидный токен или ошибка запуска' });
+  }
+});
+
+
+app.post('/launch-app-student', async (req, res) => {
+  const { roomCode } = req.body;
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !roomCode) {
+    return res.status(400).json({ success: false, message: 'Нужен токен и код комнаты' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    jwt.verify(token, JWT_SECRET);
+
+    const exePath = path.join(__dirname, '..', '..', 'VR_Edu_Prototype', 'VREdu.exe');
+    const args = [`-jwt=${token}`, `-roomCode=${roomCode}`];
+
+    const child = spawn(exePath, args, {
+      detached: true,
+      stdio: 'ignore' 
+    });
+
+    child.unref();
+
+    return res.json({ success: true, message: 'Сервер запускается' });
+
+  } catch (err) {
+    console.error("Ошибка токена или запуска:", err);
+    return res.status(401).json({ success: false, message: 'Невалидный токен или ошибка запуска' });
+  }
+});
+
+app.post('/check-access', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  const { roomCode } = req.body;
+
+  if (!authHeader || !roomCode) {
+    return res.status(400).json({ access: false });
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const studentId = decoded.user_id;
+
+    const [rows] = await db.query(
+      'SELECT * FROM room_students WHERE room_code = ? AND student_id = ?',
+      [roomCode, studentId]
+    );
+
+    return res.json({ access: rows.length > 0 });
+  } catch (err) {
+    return res.status(401).json({ access: false });
+  }
 });
 
 

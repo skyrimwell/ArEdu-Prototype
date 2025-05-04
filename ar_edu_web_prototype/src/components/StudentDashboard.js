@@ -55,6 +55,28 @@ const StudentDashboard = () => {
     }
   };
 
+  const launchAppStudent = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/launch-app-student", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ roomCode }),
+      });
+  
+      if (response.ok) {
+        alert("Вы успешно подключились к комнате!");
+      } else {
+        alert("Ошибка при подключении к комнате");
+      }
+    } catch (error) {
+      console.error("Ошибка при подключении к комнате:", error);
+    }
+  };
+
+
   const handleLogout = async () => {
     try {
       const response = await fetch("http://localhost:5000/logout", {
@@ -124,9 +146,9 @@ const StudentDashboard = () => {
             <ChatRoom roomId={room.code} />
           </div>
         ))}
-        <button style={{ ...styles.button, marginTop: '20px' }}> 
-          Подключиться к VR комнате в роли слушателя
-        </button>
+        {rooms.map((room)=> (
+          <button onClick={() => launchAppStudent(room.code)} style={{ ...styles.button, marginTop: '20px' }}> Подключиться к VR комнате в роли слушателя</button>
+        ))}
         <button onClick={handleLogout} style={{ ...styles.button, marginTop: '20px' }}>
           Выйти
         </button>

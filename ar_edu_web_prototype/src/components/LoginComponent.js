@@ -18,14 +18,11 @@ const LoginPage = () => {
   
       if (response.ok) {
         const data = await response.json();
-        alert(data.message);
         if (data.user.accountType === 1){
-          alert("teacher");
           navigate("/teacher-dashboard");
           localStorage.setItem("token", data.token);
           document.cookie = `token=${data.token}; path=/;`;
         } else {
-          alert("student");
           navigate("/student-dashboard");
           localStorage.setItem("token", data.token);
           document.cookie = `token=${data.token}; path=/;`;

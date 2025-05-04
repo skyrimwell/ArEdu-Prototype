@@ -53,6 +53,32 @@ const TeacherDashboard = () => {
     }
   };
 
+  const launchAppTeacher = async (roomCode) => {
+    console.log("launchAppTeacher вызван с:");
+    console.log("token:", token);
+    console.log("roomCode:", roomCode);
+    try {
+      const response = await fetch("http://localhost:5000/launch-app-teacher", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ roomCode }),
+      });
+  
+      if (response.ok) {
+        alert("Сервер успешно запущен для комнаты!");
+      } else {
+        const errorData = await response.json();
+        alert("Ошибка при запуске сервера: " + errorData.message);
+      }
+    } catch (error) {
+      console.error("Ошибка при запуске сервера:", error);
+      alert("Ошибка при запуске сервера");
+    }
+  };
+
   const fetchStudents = async (roomCode) => {
     try {
       const response = await fetch(`http://localhost:5000/room-students/${roomCode}`, {
@@ -152,10 +178,12 @@ const TeacherDashboard = () => {
             <ChatRoom roomId={room.code} />
           </div>
         ))}
-        <button style={{ ...styles.button, marginTop: '20px' }}> 
-          Подключиться к VR комнате в роли ведущего
-        </button>
+        
+        {rooms.map((room)=> (
+          <button onClick={() => launchAppTeacher(room.code)} style={{ ...styles.button, marginTop: '20px' }}> Подключиться к VR комнате в роли ведущего</button>
+        ))}
         <button onClick={handleLogout} style={{ ...styles.button, marginTop: '20px' }}>
+        
           Выйти
         </button>
       </div>
