@@ -324,14 +324,14 @@ app.post('/launch-app-teacher', async (req, res) => {
   try {
     jwt.verify(token, JWT_SECRET);
 
-    const exePath = path.join(__dirname, '..', '..', 'VR_Edu_Prototype', 'VREdu.exe');
-    const args = [`RoomMap?listen`, `-jwt=${token}`, `-roomCode=${roomCode}`];
+    const exePath = path.join(__dirname, '..', '..',  'VR_Edu_Prototype','Windows', 'VREdu.exe');
+    const args = [`ThirdPersonMap?listen`, `-jwt=${token}`, `-roomCode=${roomCode}`];
 
     const child = spawn(exePath, args, {
       detached: true,
       stdio: 'ignore'
     });
-
+    console.log(`Запуск VR клиента с токеном ${token} и кодом комнаты ${roomCode}`);
     child.unref(); 
 
     return res.json({ success: true, message: 'Сервер запускается' });
@@ -355,14 +355,14 @@ app.post('/launch-app-student', async (req, res) => {
   try {
     jwt.verify(token, JWT_SECRET);
 
-    const exePath = path.join(__dirname, '..', '..', 'VR_Edu_Prototype', 'VREdu.exe');
-    const args = [`-jwt=${token}`, `-roomCode=${roomCode}`];
+    const exePath = path.join(__dirname, '..', '..',  'VR_Edu_Prototype', 'Windows','VREdu.exe');
+    const args = [`127.0.0.1`, `-jwt=${token}`, `-roomCode=${roomCode}`];
 
     const child = spawn(exePath, args, {
       detached: true,
       stdio: 'ignore' 
     });
-
+    console.log(`Запуск VR клиента с токеном ${token} и кодом комнаты ${roomCode}`); 
     child.unref();
 
     return res.json({ success: true, message: 'Сервер запускается' });
@@ -384,7 +384,7 @@ app.post('/check-access', async (req, res) => {
   const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    const studentId = decoded.user_id;
+    const studentId = decoded.id;
 
     const [rows] = await db.query(
       'SELECT * FROM room_students WHERE room_code = ? AND student_id = ?',
@@ -393,7 +393,7 @@ app.post('/check-access', async (req, res) => {
 
     return res.json({ access: rows.length > 0 });
   } catch (err) {
-    return res.status(401).json({ access: false });
+    return res.status(401).json({ err });
   }
 });
 

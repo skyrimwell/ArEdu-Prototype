@@ -55,7 +55,7 @@ const StudentDashboard = () => {
     }
   };
 
-  const launchAppStudent = async () => {
+  const launchAppStudent = async (roomCode) => {
     try {
       const response = await fetch("http://localhost:5000/launch-app-student", {
         method: "POST",
