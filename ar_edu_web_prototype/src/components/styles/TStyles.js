@@ -111,6 +111,21 @@ const styles = {
       marginBottom: '20px',
       boxShadow: '0 0 10px rgba(0,0,0,0.1)',
     },
+    circleButton: {
+      backgroundColor: '#4caf50',
+      color: 'white',
+      border: 'none',
+      borderRadius: '50%',
+      width: '40px',
+      height: '40px',
+      fontSize: '20px',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
+      marginLeft: '10px',
+    },
   };
 
 export default styles;

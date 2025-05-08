@@ -12,15 +12,19 @@ const cookie = require('cookie');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const mammoth = require('mammoth');
 const ROOMS_UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
 const { spawn } = require('child_process');
 const app = express();
 const PORT = 5000;
 const JWT_SECRET = process.env.COOKIE_TOKEN;
+const { promisify } = require('util');
+const writeFileAsync = promisify(fs.writeFile);
 
 app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
+app.use('/uploads', express.static(ROOMS_UPLOAD_DIR));
 
 const db = mysql.createPool({
   host: process.env.DB_HOST,
@@ -267,6 +271,55 @@ app.post('/get-room-students', async (req, res) => {
   }
 });
 
+app.post('/mark-attendance', async (req, res) => {
+  const { studentId, roomCode } = req.body;
+  const today = new Date().toISOString().split('T')[0];
+
+  try {
+    await db.query(
+      'INSERT INTO attendance (student_id, room_code, date) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE status=TRUE',
+      [studentId, roomCode, today]
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Ошибка при отметке посещаемости:", error);
+    res.status(500).json({ message: "Ошибка при отметке посещаемости" });
+  }
+});
+
+app.post('/generate-attendance/:roomCode', async (req, res) => {
+  const { roomCode } = req.params;
+  const roomDir = path.join(ROOMS_UPLOAD_DIR, roomCode);
+
+  try {
+    const [rows] = await db.query(`
+      SELECT users.email AS name, a.date, a.status 
+      FROM attendance a 
+      JOIN users ON users.id = a.student_id 
+      WHERE a.room_code = 'D4FOY6'
+      ORDER BY a.date DESC;
+    `, [roomCode]);
+
+    if (!fs.existsSync(roomDir)) {
+      fs.mkdirSync(roomDir, { recursive: true });
+    }
+
+    const reportPath = path.join(roomDir, `attendance_${roomCode}.txt`);
+    let content = `Отчёт о посещаемости для комнаты ${roomCode}\n\n`;
+
+    for (const row of rows) {
+      content += `${row.date} | ${row.name} | ${row.status ? 'Присутствовал' : 'Отсутствовал'}\n`;
+    }
+
+    fs.writeFileSync(reportPath, content, 'utf8');
+
+    res.json({ success: true, message: 'Отчёт сформирован', filename: `attendance_${roomCode}.txt` });
+  } catch (err) {
+    console.error('Ошибка при создании отчёта:', err);
+    res.status(500).json({ success: false, message: 'Ошибка при создании отчёта' });
+  }
+});
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const roomCode = req.params.roomCode;
@@ -282,10 +335,26 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-app.post('/upload/:roomCode', upload.single('file'), (req, res) => {
+app.post('/upload/:roomCode', upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'Файл не загружен' });
   }
+
+  const { originalname, path: filePath } = req.file;
+  const roomDir = path.dirname(filePath);
+
+  if (originalname.endsWith('.docx')) {
+    try {
+      const result = await mammoth.extractRawText({ path: filePath });
+      const txtPath = path.join(roomDir, originalname.replace(/\.docx$/, '.txt'));
+      fs.writeFileSync(txtPath, result.value, 'utf8');
+      console.log(`Файл ${originalname} конвертирован в TXT`);
+      fs.copyFileSync(txtPath,)
+    } catch (err) {
+      console.error('Ошибка при конвертации .docx в .txt:', err);
+    }
+  }
+
   res.json({ success: true, message: 'Файл загружен' });
 });
 
@@ -311,6 +380,23 @@ app.get('/download/:roomCode/:filename', (req, res) => {
   }
   res.download(filePath);
 });
+
+app.get('/downloadRaw/:roomCode/:filename', (req, res) => {
+  const filePath = path.join(ROOMS_UPLOAD_DIR, req.params.roomCode, req.params.filename);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ success: false, message: 'Файл не найден' });
+  }
+
+  const ext = path.extname(filePath);
+  if (ext === '.txt') {
+    const text = fs.readFileSync(filePath, 'utf-8');
+    res.setHeader('Content-Type', 'text/plain');
+    return res.send(text);
+  }
+
+  res.download(filePath);
+});
+
 
 app.post('/launch-app-teacher', async (req, res) => {
   const { roomCode } = req.body;
