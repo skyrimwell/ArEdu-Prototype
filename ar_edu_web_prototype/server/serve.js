@@ -391,7 +391,7 @@ app.get('/downloadRaw/:roomCode/:filename', (req, res) => {
   if (ext === '.txt') {
     const text = fs.readFileSync(filePath, 'utf-8');
     res.setHeader('Content-Type', 'text/plain');
-    return res.send(text);
+      return res.json({text: text}); 
   }
 
   res.download(filePath);
