@@ -270,7 +270,7 @@ const TeacherDashboard = () => {
         <h3>Активные комнаты</h3>
         {rooms.map((room) => (
           <div key={room.code} style={styles.room}>
-            <p><strong>Комната № {room.code}</strong></p>
+            <p><strong>Комната {room.name}</strong></p>
             <ChatRoom roomId={room.code} />
           </div>
         ))}

@@ -491,7 +491,7 @@ httpServer.listen(PORT, () => {
   console.log(`HTTP сервер на порту ${PORT}`);
 });
 
-// --- WebSocket сервер с помощью socket.io ---
+
 const io = new Server(httpServer, {
   cors: {
     origin: "http://localhost:3000",
